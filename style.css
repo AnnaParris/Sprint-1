@@ -1,13 +1,13 @@
 html {
-
+background-color: #f64fd6;
 }
 
 body{
-
+    background-color:#2e77f9;
 }
 
 main {
-
+    background-color:#43d1bf;
 }
 
 header {
@@ -26,4 +26,6 @@ div {
 
 }
 
-
+#logo {
+    width:100px;
+}
