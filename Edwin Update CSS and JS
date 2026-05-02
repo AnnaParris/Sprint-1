@@ -1,0 +1,163 @@
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #dcd9c9;
+    text-align: center;
+}
+
+
+header {
+    background: #e8e5d6;
+    padding: 15px;
+    border: 2px solid #cfcab5;
+}
+
+header h1 {
+    margin: 0;
+    color: rgba(11, 1, 1, 0.791);
+    font-size: 36px;
+}
+
+
+.nav-links {
+    margin: 10px 0 20px;
+}
+
+.nav-links a {
+    color: rgb(0, 0, 7);
+    text-decoration: none;
+    margin: 0 8px;
+}
+
+
+.container {
+    width: 900px;
+    margin: auto;
+    border: 2px dashed #8ecae6;
+    padding: 15px;
+    background: #efede3;
+
+    display: grid;
+    grid-template-areas:
+        "topbar topbar"
+        "main sidebar"
+        "description sidebar"
+        "subbox sidebar"
+        "ads sidebar";
+    grid-template-columns: 2fr 1fr;
+    gap: 10px;
+}
+
+
+.topbar {
+    grid-area: topbar;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #ddd;
+    padding: 10px;
+    border-radius: 30px;
+}
+
+.brand {
+    color: rgb(13, 4, 1);
+    font-weight: bold;
+}
+
+.title {
+    color: rgb(7, 2, 0);
+    font-weight: bold;
+}
+
+.search {
+    padding: 5px 10px;
+    border-radius: 20px;
+    border: 1px solid #999;
+}
+
+
+.main {
+    grid-area: main;
+    background: #ccc;
+    height: 250px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+
+.sidebar {
+    grid-area: sidebar;
+    background: #ddd;
+    padding: 10px;
+    border: 2px solid #aaa;
+}
+
+.scroll-box {
+    height: 80px;
+    border: 1px solid #aaa;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.state {
+    margin-bottom: 10px;
+}
+
+.list {
+    height: 200px;
+    overflow-y: scroll;
+    border: 1px solid #aaa;
+    padding: 5px;
+    text-align: left;
+}
+
+.list div {
+    margin: 4px 0;
+    font-size: 12px;
+}
+
+
+.description {
+    grid-area: description;
+    background: #ddd;
+    padding: 15px;
+}
+
+
+.subbox {
+    grid-area: subbox;
+    background: #ddd;
+    padding: 10px;
+    font-size: 14px;
+}
+
+
+.ads {
+    grid-area: ads;
+    background: #ccc;
+    padding: 15px;
+    display: flex;
+    justify-content: space-around;
+}
+
+
+footer {
+    margin-top: 15px;
+    color: rgb(14, 1, 7);
+}
+
+#map {
+    width: 100%;
+    height: 100%;
+    border-radius: 10px;
+}
+
+<---------------------- JS Below ------------------------------> 
+const map = L.map('map').setView([39.5, -98.35], 4); // centered on US
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '&copy; OpenStreetMap contributors'
+}).addTo(map);
