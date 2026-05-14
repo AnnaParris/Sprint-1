@@ -1,0 +1,138 @@
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #dcd9c9;
+    text-align: center;
+}
+
+.container {
+    color: rgba(11, 1, 1, 0.791);
+    width:95%;
+    margin: 10px auto;
+    border: 2px dashed #8ecae6;
+    padding: 15px;
+    background: #efede3;
+
+    display: grid;
+    grid-template-areas:
+        "topbar topbar"
+        "main sidebar";
+    grid-template-columns: 2fr 1fr;
+    gap: 10px;
+}
+
+.topbar {
+    grid-area: topbar;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #ddd;
+    font-size: 36px;
+    padding: 10px;
+    border-radius: 30px;
+}
+
+.brand {
+    color: rgb(13, 4, 1);
+    font-weight: bold;
+}
+
+.title {
+    color: rgb(7, 2, 0);
+    font-weight: bold;
+}
+
+.search {
+    padding: 5px 10px;
+    border-radius: 20px;
+    border: 1px solid #999;
+}
+
+
+.main {
+    grid-area: main;
+    background: #ccc;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height:800px;
+}
+
+
+.sidebar {
+    grid-area: sidebar;
+    background: #ddd;
+    padding: 10px;
+    border: 2px solid #aaa;
+}
+
+.scroll-box {
+    border: 1px solid #aaa;
+    margin-bottom: 10px;
+    display:flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.state {
+    margin-bottom: 10px;
+}
+
+.list {
+    height: 200px;
+    overflow-y: scroll;
+    border: 1px solid #aaa;
+    padding: 5px;
+    text-align: left;
+    font-size:28px;
+}
+
+.list ul {
+       display:flex;
+       flex-flow:column;
+}
+
+.list div {
+    margin: 4px auto;
+}
+
+
+.description {
+    grid-area: description;
+    background: #ddd;
+    padding: 15px;
+}
+
+
+.subbox {
+    grid-area: subbox;
+    background: #ddd;
+    padding: 10px;
+    font-size: 14px;
+}
+
+
+.ads {
+    grid-area: ads;
+    background: #ccc;
+    padding: 15px;
+    display: flex;
+    justify-content: space-around;
+}
+
+
+footer {
+    margin-top: 15px;
+    color: rgb(14, 1, 7);
+}
+
+#map {
+    width: 100%;
+    height: 100%;
+    border-radius: 10px;
+}
+
+#logo {
+    width: 80px;
+    height: auto;
+}
