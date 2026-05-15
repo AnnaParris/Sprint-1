@@ -4,8 +4,7 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: '&copy; OpenStreetMap contributors'
 }).addTo(map);
 
-// PUT THIS AT THE TOP, before the dropdowns and event listeners
-
+// Build cityData from stations.js
 const cityData = {};
 stations.forEach(station => {
     if (!cityData[station.stateCode]) {
@@ -16,54 +15,41 @@ stations.forEach(station => {
     }
 });
 
-// dropdown of states
+// dropdown references
 const dropdown = document.getElementById('dropdown');
 const city_select = document.getElementById('city_select');
 const states = Object.keys(cityData).sort();
 
-
-//loop to update each state in the dropdown
+// loop to update each state in the dropdown
 states.forEach(state => {
-
-    //creating the element to update each state
     const option = document.createElement('option');
     option.value = state;
     option.textContent = state;
-    //appending the dropdown
     dropdown.appendChild(option);
 });
 
-// markers object and stations array
+// markers object
 const markers = {};
-//an array of hardcoded stations
-
 
 // loop to create markers and checkboxes
 stations.forEach(station => {
-    // create marker
-    //L. is Leaflet's main object, marker is one of the bulit-in tools. 
-    // lat and lng are for the coodinates 
     const marker = L.marker([station.lat, station.lng])
-    .bindPopup(`<b>${station.callSign}</b><br>${station.city}`);
+        .bindPopup(`<b>${station.callSign}</b><br>${station.city}<br>${station.frequency}`);
     marker.addTo(map);
     markers[station.callSign] = marker;
 
-    // create checkbox
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
     checkbox.checked = true;
     checkbox.id = station.callSign;
 
-    // create label
     const label = document.createElement('label');
     label.htmlFor = station.callSign;
     label.textContent = `${station.callSign} - ${station.city}`;
 
-    // add to the list one checkbox and one label 
     document.getElementById('stationList').appendChild(checkbox);
     document.getElementById('stationList').appendChild(label);
 
-    // add an event listener to toggle marker
     checkbox.addEventListener('change', () => {
         if (checkbox.checked) {
             markers[station.callSign].addTo(map);
@@ -73,18 +59,14 @@ stations.forEach(station => {
     });
 });
 
-// Reference the state dropdown
+// state dropdown event listener
 const state_select = document.getElementById('dropdown');
-
-
-// Event listener for the state selection
 state_select.addEventListener('change', (event) => {
     const selectedState = event.target.value;
 
+    // Update city dropdown
     city_select.innerHTML = '<option value="">-- Select City --</option>';
-    city_select.value = ""; 
-
-    // 2. Build the new city list for the selected state
+    city_select.value = "";
     if (cityData[selectedState]) {
         cityData[selectedState].forEach(city => {
             const option = document.createElement('option');
@@ -94,108 +76,36 @@ state_select.addEventListener('change', (event) => {
         });
     }
 
-    if (selectedState === 'WA') {
-        // Center of Washington
-        map.setView([47.4749, -120.6805], 7);
-    } 
-    else if (selectedState === 'AR') {
-        // Center of Arkansas (near Little Rock)
-        map.setView([34.7465, -92.2896], 7);
-    }
-        // Center Ohio
-    else if (selectedState === 'OH') {
-        map.setView([40.4173, -82.9071], 7); // Center of Ohio
-    }
-    // Zoom out slightly more if they go back to the default
-    else if (selectedState === '-- State --') {
-        map.setView([39.8283, -98.5795], 4); // Center of USA
-    }
-
-    // NEW: Logic to show/hide markers based on the state
-    stations.forEach(station => {
-        const currentMarker = markers[station.callSign];
-        
-        // If the station belongs to the selected city/state, show it
-        // This example shows markers if their city is in the cityData for that state
-        if (cityData[selectedState] && cityData[selectedState].includes(station.city)) {
-            currentMarker.addTo(map);
-            document.getElementById(station.callSign).checked = true; // Keep checkbox synced
-        } else {
-            currentMarker.remove(); // Hide if it doesn't belong
-        }
-    });
-
-    // Zoom out and hide all markers if they go back to default
-    if (selectedState === '-- State --' || selectedState === '') {
+    // Zoom to state or reset
+    if (selectedState === '' || selectedState === '-- State --') {
         map.setView([39.8283, -98.5795], 4);
         stations.forEach(station => markers[station.callSign].addTo(map));
+    } else if (cityData[selectedState]) {
+        const stateStations = stations.filter(s => s.stateCode === selectedState);
+        const avgLat = stateStations.reduce((sum, s) => sum + s.lat, 0) / stateStations.length;
+        const avgLng = stateStations.reduce((sum, s) => sum + s.lng, 0) / stateStations.length;
+        map.setView([avgLat, avgLng], 7);
     }
 
-    // 1. Clear the current cities in the dropdown
-    city_select.innerHTML = '<option value="">-- Select City --</option>';
-
-
-    if (cityData[selectedState]) {
-        cityData[selectedState].forEach(city => {
-            const option = document.createElement('option');
-            option.value = city;
-            option.textContent = city;
-            city_select.appendChild(option);
-        });
-    }
-
-
+    // Show/hide markers based on state
+    stations.forEach(station => {
+        const currentMarker = markers[station.callSign];
+        if (cityData[selectedState] && cityData[selectedState].includes(station.city)) {
+            currentMarker.addTo(map);
+            document.getElementById(station.callSign).checked = true;
+        } else if (selectedState !== '' && selectedState !== '-- State --') {
+            currentMarker.remove();
+        }
+    });
 });
 
-
-// --------------------city-----------------------------
-
-// 1. Reference the select element and the data array
-
-
-// Cities objects
-// const cityData = {
-//     'WA': ['Seattle', 'Spokane', 'Yakima'],
-//     'OH': ['Columbus', 'Cleveland', 'Cincinnati'],
-//     'AR': ['Little Rock']
-// };
-
-// // 2. Loop to update each city in the dropdown
-// cities.forEach(city => {
-//     // Create the <option> element
-//     const option = document.createElement('option');
-    
-//     // Set the value and the text visible to the user
-//     option.value = city;
-//     option.textContent = city;
-    
-//     // Append the option to the city_select dropdown
-//     city_select.appendChild(option);
-// });
-
-// 3. Optional: Add an event listener to handle when a user selects a city
+// city dropdown event listener
 city_select.addEventListener('change', (event) => {
     const selectedCity = event.target.value;
-    console.log("User selected:", selectedCity);
-    
-    // Logic to filter markers or zoom the map could go here
-if (selectedCity === 'Seattle') {
-        map.setView([47.6062, -122.3321], 10);
-    } 
-    else if (selectedCity === 'Spokane') {
-        map.setView([47.6588, -117.4260], 10);
-    } 
-    else if (selectedCity === 'Yakima') {
-        map.setView([46.6021, -120.5059], 10);
-    }
-    // New Ohio Cities
-    else if (selectedCity === 'Columbus') {
-        map.setView([39.9612, -82.9988], 10);
-    }
-    else if (selectedCity === 'Cleveland') {
-        map.setView([41.4993, -81.6944], 10);
-    }
-    else if (selectedCity === 'Cincinnati') {
-        map.setView([39.1031, -84.5120], 10);
+    if (!selectedCity) return;
+
+    const cityStation = stations.find(s => s.city === selectedCity);
+    if (cityStation) {
+        map.setView([cityStation.lat, cityStation.lng], 10);
     }
 });
