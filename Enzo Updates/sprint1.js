@@ -4,14 +4,28 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: '&copy; OpenStreetMap contributors'
 }).addTo(map);
 
+// PUT THIS AT THE TOP, before the dropdowns and event listeners
+
+const cityData = {};
+stations.forEach(station => {
+    if (!cityData[station.stateCode]) {
+        cityData[station.stateCode] = [];
+    }
+    if (!cityData[station.stateCode].includes(station.city)) {
+        cityData[station.stateCode].push(station.city);
+    }
+});
+
 // dropdown of states
 const dropdown = document.getElementById('dropdown');
-const states = ['AK', 'AL', 'AR', 'AZ', 'WA', 'OH'];
+const city_select = document.getElementById('city_select');
+const states = Object.keys(cityData).sort();
 
 
 //loop to update each state in the dropdown
 states.forEach(state => {
-   //creating the element to update each state
+
+    //creating the element to update each state
     const option = document.createElement('option');
     option.value = state;
     option.textContent = state;
@@ -22,24 +36,16 @@ states.forEach(state => {
 // markers object and stations array
 const markers = {};
 //an array of hardcoded stations
-const stations = [
-    { callSign: 'KWAO', city: 'Seattle', lat: 47.6062, lng: -122.3321 },
-    { callSign: 'KTSL', city: 'Spokane', lat: 47.6588, lng: -117.4260 },
-    { callSign: 'KAKP', city: 'Tri-Cities', lat: 46.2396, lng: -119.1006 },
-    { callSign: 'K210CX', city: 'Yakima', lat: 46.6021, lng: -120.5059 },
-    { callSign: 'KYKV-HD2', city: 'Yakima', lat: 46.6021, lng: -120.5059 },
-    // Ohio cities
-    { callSign: 'WBNS', city: 'Columbus', lat: 39.9612, lng: -82.9988 },
-    { callSign: 'WCLV', city: 'Cleveland', lat: 41.4993, lng: -81.6944 },
-    { callSign: 'WEBN', city: 'Cincinnati', lat: 39.1031, lng: -84.5120 },
-];
+
 
 // loop to create markers and checkboxes
 stations.forEach(station => {
     // create marker
     //L. is Leaflet's main object, marker is one of the bulit-in tools. 
     // lat and lng are for the coodinates 
-    const marker = L.marker([station.lat, station.lng]);
+    const marker = L.marker([station.lat, station.lng])
+    .bindPopup(`<b>${station.callSign}</b><br>${station.city}`);
+    marker.addTo(map);
     markers[station.callSign] = marker;
 
     // create checkbox
@@ -122,7 +128,7 @@ state_select.addEventListener('change', (event) => {
     // Zoom out and hide all markers if they go back to default
     if (selectedState === '-- State --' || selectedState === '') {
         map.setView([39.8283, -98.5795], 4);
-        stations.forEach(station => markers[station.callSign].remove());
+        stations.forEach(station => markers[station.callSign].addTo(map));
     }
 
     // 1. Clear the current cities in the dropdown
@@ -145,14 +151,14 @@ state_select.addEventListener('change', (event) => {
 // --------------------city-----------------------------
 
 // 1. Reference the select element and the data array
-const city_select = document.getElementById('city_select');
+
 
 // Cities objects
-const cityData = {
-    'WA': ['Seattle', 'Spokane', 'Yakima'],
-    'OH': ['Columbus', 'Cleveland', 'Cincinnati'],
-    'AR': ['Little Rock']
-};
+// const cityData = {
+//     'WA': ['Seattle', 'Spokane', 'Yakima'],
+//     'OH': ['Columbus', 'Cleveland', 'Cincinnati'],
+//     'AR': ['Little Rock']
+// };
 
 // // 2. Loop to update each city in the dropdown
 // cities.forEach(city => {
