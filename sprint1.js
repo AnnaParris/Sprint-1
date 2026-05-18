@@ -4,55 +4,52 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: '&copy; OpenStreetMap contributors'
 }).addTo(map);
 
-// dropdown of states
-const dropdown = document.getElementById('dropdown');
-const states = ['AK', 'AL', 'AR', 'AZ', 'WA'];
+// Build cityData from stations.js
+const cityData = {};
+stations.forEach(station => {
+    if (!cityData[station.stateCode]) {
+        cityData[station.stateCode] = [];
+    }
+    if (!cityData[station.stateCode].includes(station.city)) {
+        cityData[station.stateCode].push(station.city);
+    }
+});
 
-//loop to update each state in the dropdown
+// dropdown references
+const dropdown = document.getElementById('dropdown');
+const city_select = document.getElementById('city_select');
+const states = Object.keys(cityData).sort();
+
+// loop to update each state in the dropdown
 states.forEach(state => {
-   //creating the element to update each state
     const option = document.createElement('option');
     option.value = state;
     option.textContent = state;
-    //appending the dropdown
     dropdown.appendChild(option);
 });
 
-// markers object and stations array
+// markers object
 const markers = {};
-//an array of hardcoded stations
-const stations = [
-    { callSign: 'KWAO', city: 'Seattle', lat: 47.6062, lng: -122.3321 },
-    { callSign: 'KTSL', city: 'Spokane', lat: 47.6588, lng: -117.4260 },
-    { callSign: 'KAKP', city: 'Tri-Cities', lat: 46.2396, lng: -119.1006 },
-    { callSign: 'K210CX', city: 'Yakima', lat: 46.6021, lng: -120.5059 },
-    { callSign: 'KYKV-HD2', city: 'Yakima', lat: 46.6021, lng: -120.5059 },
-];
 
 // loop to create markers and checkboxes
 stations.forEach(station => {
-    // create marker
-    //L. is Leaflet's main object, marker is one of the bulit-in tools. 
-    // lat and lng are for the coodinates 
-    const marker = L.marker([station.lat, station.lng]).addTo(map);
+    const marker = L.marker([station.lat, station.lng])
+        .bindPopup(`<b>${station.callSign}</b><br>${station.city}<br>${station.frequency}`);
+    marker.addTo(map);
     markers[station.callSign] = marker;
 
-    // create checkbox
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
     checkbox.checked = true;
     checkbox.id = station.callSign;
 
-    // create label
     const label = document.createElement('label');
     label.htmlFor = station.callSign;
     label.textContent = `${station.callSign} - ${station.city}`;
 
-    // add to the list one checkbox and one label 
     document.getElementById('stationList').appendChild(checkbox);
     document.getElementById('stationList').appendChild(label);
 
-    // add an event listener to toggle marker
     checkbox.addEventListener('change', () => {
         if (checkbox.checked) {
             markers[station.callSign].addTo(map);
@@ -60,4 +57,55 @@ stations.forEach(station => {
             markers[station.callSign].remove();
         }
     });
+});
+
+// state dropdown event listener
+const state_select = document.getElementById('dropdown');
+state_select.addEventListener('change', (event) => {
+    const selectedState = event.target.value;
+
+    // Update city dropdown
+    city_select.innerHTML = '<option value="">-- Select City --</option>';
+    city_select.value = "";
+    if (cityData[selectedState]) {
+        cityData[selectedState].forEach(city => {
+            const option = document.createElement('option');
+            option.value = city;
+            option.textContent = city;
+            city_select.appendChild(option);
+        });
+    }
+
+    // Zoom to state or reset
+    if (selectedState === '' || selectedState === '-- State --') {
+        map.setView([39.8283, -98.5795], 4);
+        stations.forEach(station => markers[station.callSign].addTo(map));
+    } else if (cityData[selectedState]) {
+        const stateStations = stations.filter(s => s.stateCode === selectedState);
+        const avgLat = stateStations.reduce((sum, s) => sum + s.lat, 0) / stateStations.length;
+        const avgLng = stateStations.reduce((sum, s) => sum + s.lng, 0) / stateStations.length;
+        map.setView([avgLat, avgLng], 7);
+    }
+
+    // Show/hide markers based on state
+    stations.forEach(station => {
+        const currentMarker = markers[station.callSign];
+        if (cityData[selectedState] && cityData[selectedState].includes(station.city)) {
+            currentMarker.addTo(map);
+            document.getElementById(station.callSign).checked = true;
+        } else if (selectedState !== '' && selectedState !== '-- State --') {
+            currentMarker.remove();
+        }
+    });
+});
+
+// city dropdown event listener
+city_select.addEventListener('change', (event) => {
+    const selectedCity = event.target.value;
+    if (!selectedCity) return;
+
+    const cityStation = stations.find(s => s.city === selectedCity);
+    if (cityStation) {
+        map.setView([cityStation.lat, cityStation.lng], 10);
+    }
 });
