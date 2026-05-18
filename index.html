@@ -5,6 +5,7 @@
     <title>Radio Map Wireframe</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://unpkg.com/leaflet/dist/leaflet.js" defer></script>
+    <script src="stations.js" defer></script>
     <script src="sprint1.js" defer></script>
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
@@ -20,7 +21,6 @@
             <div class="title">USA Radio Map</div>
             <input class="search" type="text" placeholder="Search">
         </div>
-
         <div class="main">
             <div id="map"></div>
         </div>
@@ -32,25 +32,17 @@
             </div>
 
             <select id="dropdown" class="state">
-                <option value="" disabled selected>-- State --</option>
+                <option value="">-- State --</option>
+            </select>
+
+            <select id="city_select" class="cities">
+                <option value="">-- Select City --</option>
             </select>
 
             <div class="list">
              <ul id="stationList">
-
             </ul>
             </div>
-        </div>
-
-        <div class="description">Description of the radio map</div>
-
-        <div class="subbox">
-            P48: Radio MAP
-        </div>
-
-        <div class="ads">
-            <div>Ads</div>
-            <div>Ads</div>
         </div>
 
     </div>
