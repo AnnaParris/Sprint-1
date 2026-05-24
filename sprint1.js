@@ -109,3 +109,41 @@ city_select.addEventListener('change', (event) => {
         map.setView([cityStation.lat, cityStation.lng], 10);
     }
 });
+
+
+// Reset functions
+function resetMap() {
+    // Reset view to default
+    map.setView([39.5, -98.35], 4);
+    
+    // Show all markers and check all checkboxes
+    stations.forEach(station => {
+        markers[station.callSign].addTo(map);
+        document.getElementById(station.callSign).checked = true;
+    });
+    
+    // Reset dropdowns
+    document.getElementById('dropdown').value = '';
+    document.getElementById('city_select').innerHTML = '<option value="">-- Select City --</option>';
+}
+// Reset button control
+const ResetControl = L.Control.extend({
+    options: { position: 'topleft' },
+    onAdd: function(map) {
+        const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+        const button = L.DomUtil.create('a', 'reset-button', container);
+        button.innerHTML = '🔄';
+        button.href = '#';
+        button.title = 'Reset Map';
+        button.setAttribute('role', 'button');
+        button.setAttribute('aria-label', 'Reset map view and clear markers');
+        L.DomEvent.disableClickPropagation(container);
+        L.DomEvent.on(button, 'click', function(e) {
+            L.DomEvent.preventDefault(e);
+            resetMap();
+        });
+        return container;
+    }
+});
+// Add control to map
+map.addControl(new ResetControl());
