@@ -16,7 +16,6 @@ stations.forEach(station => {
     if (!cityData[station.stateCode]) {
         cityData[station.stateCode] = [];
     }
-
     if (!cityData[station.stateCode].includes(station.city)) {
         cityData[station.stateCode].push(station.city);
     }
@@ -34,9 +33,8 @@ states.forEach(state => {
 // Create map markers and station checkbox list
 const markers = {};
 
-
 // loop to create markers and checkboxes
-stations.forEach(station => {
+[...stations].sort((a, b) => a.callSign.localeCompare(b.callSign, undefined, { sensitivity: 'base' })).forEach(station => {
     const marker = L.marker([station.lat, station.lng])
         .bindPopup(`<b>${station.callSign}</b><br>${station.city}, ${station.stateCode}<br>${station.frequency}`);
 
@@ -50,20 +48,12 @@ stations.forEach(station => {
 
     const label = document.createElement('label');
     label.htmlFor = station.callSign;
-    label.textContent = `${station.callSign} - ${station.city}`;
+    label.textContent = `${station.city} - ${station.callSign}`;
 
     const item = document.createElement('li');
     item.appendChild(checkbox);
     item.appendChild(label);
     stationList.appendChild(item);
-
-    checkbox.addEventListener('change', () => {
-        if (checkbox.checked) {
-            markers[station.callSign].addTo(map);
-        } else {
-            markers[station.callSign].remove();
-        }
-    });
 });
 
 // Station part
@@ -72,8 +62,12 @@ function showStations(matchingStations) {
 
     stations.forEach(station => {
         const checkbox = document.getElementById(station.callSign);
+        const item = checkbox.closest('li');
+        const visible = matchingCallSigns.has(station.callSign);
 
-        if (matchingCallSigns.has(station.callSign)) {
+        item.style.display = visible ? '' : 'none';
+
+        if (visible) {
             markers[station.callSign].addTo(map);
             checkbox.checked = true;
         } else {
@@ -81,12 +75,31 @@ function showStations(matchingStations) {
             checkbox.checked = false;
         }
     });
+
+    // Re-sort visible items
+    const visibleItems = [...stationList.querySelectorAll('li')]
+        .filter(li => li.style.display !== 'none');
+    visibleItems.sort((a, b) => {
+        const aText = a.querySelector('label').textContent;
+        const bText = b.querySelector('label').textContent;
+        return aText.localeCompare(bText, undefined, { sensitivity: 'base' });
+    });
+    visibleItems.forEach(li => stationList.appendChild(li));
 }
 
-function zoomToStations(matchingStations) {
-    if (matchingStations.length === 0) {
-        return;
+document.getElementById('stationList').addEventListener('change', function(e) {
+    if (e.target.type === 'checkbox') {
+        const callSign = e.target.id;
+        if (e.target.checked) {
+            markers[callSign].addTo(map);
+        } else {
+            markers[callSign].remove();
+        }
     }
+});
+
+function zoomToStations(matchingStations) {
+    if (matchingStations.length === 0) return;
 
     if (matchingStations.length === 1) {
         const station = matchingStations[0];
@@ -100,22 +113,17 @@ function zoomToStations(matchingStations) {
 }
 
 // Map Reset
-
 function resetMap() {
     map.setView([39.5, -98.35], 4);
     showStations(stations);
     dropdown.value = '';
     city_select.innerHTML = '<option value="">-- Select City --</option>';
-
-    if (searchInput) {
-        searchInput.value = '';
-    }
+    if (searchInput) searchInput.value = '';
 }
 
 // State dropdown filter
 dropdown.addEventListener('change', event => {
     const selectedState = event.target.value;
-
     city_select.innerHTML = '<option value="">-- Select City --</option>';
 
     if (!selectedState) {
@@ -140,9 +148,7 @@ city_select.addEventListener('change', event => {
     const selectedCity = event.target.value;
     const selectedState = dropdown.value;
 
-    if (!selectedCity) {
-        return;
-    }
+    if (!selectedCity) return;
 
     const cityStations = stations.filter(station => {
         return station.city === selectedCity && station.stateCode === selectedState;
@@ -153,14 +159,11 @@ city_select.addEventListener('change', event => {
 });
 
 // Search suggestions and keyword search part
-
 const searchSuggestions = document.createElement('datalist');
 searchSuggestions.id = 'searchSuggestions';
 document.body.appendChild(searchSuggestions);
 
-if (searchInput) {
-    searchInput.setAttribute('list', 'searchSuggestions');
-}
+if (searchInput) searchInput.setAttribute('list', 'searchSuggestions');
 
 function matchesKeywords(text, searchText) {
     const keywords = searchText.toLowerCase().trim().split(/\s+/).filter(Boolean);
@@ -174,7 +177,6 @@ states.forEach(stateCode => {
         const cityStations = stations.filter(station => {
             return station.city === city && station.stateCode === stateCode;
         });
-
         citySearchOptions.push({
             type: 'City',
             value: `${city}, ${stateCode}`,
@@ -193,7 +195,6 @@ const stationSearchOptions = stations.map(station => ({
 
 const stateSearchOptions = states.map(stateCode => {
     const stateStations = stations.filter(station => station.stateCode === stateCode);
-
     return {
         type: 'State',
         value: `${stateStations[0].stateName} (${stateCode})`,
@@ -211,10 +212,7 @@ const searchOptionsByValue = new Map(searchOptions.map(option => [option.value, 
 
 function updateSearchSuggestions(searchText) {
     searchSuggestions.innerHTML = '';
-
-    if (!searchText.trim()) {
-        return;
-    }
+    if (!searchText.trim()) return;
 
     searchOptions
         .filter(option => matchesKeywords(option.searchText, searchText))
@@ -229,7 +227,6 @@ function updateSearchSuggestions(searchText) {
 
 function searchStations(searchText) {
     const searchValue = searchText.trim();
-
     if (!searchValue) {
         resetMap();
         return;
