@@ -33,10 +33,52 @@ states.forEach(state => {
 // Create map markers and station checkbox list
 const markers = {};
 
+const networkColors = {
+  kLove:        '#43d1bf',
+  air1:         '#2e77f9',
+  wayFm:        '#f64fd6',
+  christianFm:  '#27a899',
+  familyLife:   '#a259f7',
+  joyFm:        '#ff6b9d',
+  faithNetwork: '#1bbfe0',
+  moody:        '#f9a825',
+  metroMarket:  '#f94f6e',
+};
+
+function getStationColor(station) {
+  if (kLoveStations.includes(station))            return networkColors.kLove;
+  if (air1Stations.includes(station))             return networkColors.air1;
+  if (wayFmStations.includes(station))            return networkColors.wayFm;
+  if (christianFmAffiliates.includes(station))    return networkColors.christianFm;
+  if (familyLifeStations.includes(station))       return networkColors.familyLife;
+  if (joyFmStations.includes(station))            return networkColors.joyFm;
+  if (faithNetworkStations.includes(station))     return networkColors.faithNetwork;
+  if (moodyStations.includes(station))            return networkColors.moody;
+  if (book6MetroMarketStations.includes(station)) return networkColors.metroMarket;
+  return '#999999';
+}
+
+function getMarkerIcon(color) {
+    return L.divIcon({
+        className: '',
+        html: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="36" viewBox="0 0 24 36">
+            <path d="M12 0C5.4 0 0 5.4 0 12c0 9 12 24 12 24s12-15 12-24C24 5.4 18.6 0 12 0z" fill="${color}" stroke="#fff" stroke-width="1.5"/>
+            <circle cx="12" cy="12" r="4" fill="#fff"/>
+        </svg>`,
+        iconSize: [24, 36],
+        iconAnchor: [12, 36],
+        popupAnchor: [0, -36]
+    });
+}
+
 // loop to create markers and checkboxes
 [...stations].sort((a, b) => a.callSign.localeCompare(b.callSign, undefined, { sensitivity: 'base' })).forEach(station => {
-    const marker = L.marker([station.lat, station.lng])
-        .bindPopup(`<b>${station.callSign}</b><br>${station.city}, ${station.stateCode}<br>${station.frequency}`);
+    const color = getStationColor(station);  // ← add this line
+
+    const marker = L.marker([station.lat, station.lng], {
+        icon: getMarkerIcon(color)
+    })
+    .bindPopup(`<b>${station.callSign}</b><br>${station.city}, ${station.stateCode}<br>${station.frequency}`);
 
     marker.addTo(map);
     markers[station.callSign] = marker;
