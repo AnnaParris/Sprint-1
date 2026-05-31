@@ -9,6 +9,8 @@ const dropdown = document.getElementById('dropdown');
 const city_select = document.getElementById('city_select');
 const searchInput = document.querySelector('.search');
 const stationList = document.getElementById('stationList');
+// Station dropdown change: this connects the station dropdown from page.html to the JavaScript.
+const station_select = document.getElementById('station_select');
 
 // Build cityData from stations.js
 const cityData = {};
@@ -29,6 +31,25 @@ states.forEach(state => {
     option.textContent = state;
     dropdown.appendChild(option);
 });
+
+// Station dropdown change: this puts the station dropdown back to its default empty option.
+function resetStationDropdown() {
+    station_select.innerHTML = '<option value="">Station</option>';
+}
+
+// Station dropdown change: this fills the station dropdown after the user chooses a city.
+function fillStationDropdown(cityStations) {
+    resetStationDropdown();
+
+    [...cityStations]
+        .sort((a, b) => a.callSign.localeCompare(b.callSign, undefined, { sensitivity: 'base' }))
+        .forEach(station => {
+            const option = document.createElement('option');
+            option.value = station.callSign;
+            option.textContent = `${station.callSign} - ${station.frequency}`;
+            station_select.appendChild(option);
+        });
+}
 
 // Create map markers and station checkbox list
 const markers = {};
@@ -71,9 +92,170 @@ function getMarkerIcon(color) {
     });
 }
 
+// FCC contour change: this variable remembers the contour currently drawn on the map.
+let activeContourLayer = null;
+
+// FCC contour change: this cache saves FCC results so clicking the same station again is faster.
+const contourCache = new Map();
+
+// FCC contour change: this number makes sure an older FCC request cannot redraw after a newer marker click.
+let latestContourRequestId = 0;
+
+// FCC contour change: this removes suffixes like "-FM" or "-HD2" because the FCC API usually wants the base call sign.
+function getFccCallSign(station) {
+    return station.callSign.replace(/-(FM|AM|HD\d+)$/i, '');
+}
+
+// FCC contour change: this builds the FCC Contours API URL for one station.
+function getFccContourUrl(station) {
+    const params = new URLSearchParams({
+        serviceType: 'fm'
+    });
+
+    // FCC contour change: if we add facilityId to stations.js later, use it because it is the most accurate lookup.
+    if (station.facilityId) {
+        params.set('facilityId', station.facilityId);
+    } else {
+        params.set('callsign', getFccCallSign(station));
+    }
+
+    return `https://geo.fcc.gov/api/contours/entity.json?${params.toString()}`;
+}
+
+// FCC contour change: this clears the old FCC contour before drawing a new one.
+function removeActiveContour() {
+    if (activeContourLayer) {
+        map.removeLayer(activeContourLayer);
+        activeContourLayer = null;
+    }
+}
+
+// FCC contour change: this converts the FCC contour radial distances into one approximate round radius.
+function getApproxRadiusMeters(contourData) {
+    const contourPoints = contourData.features?.[0]?.properties?.contourData || [];
+    const distancesInKm = contourPoints
+        .map(point => Number(point.distance))
+        .filter(distance => Number.isFinite(distance) && distance > 0);
+
+    if (distancesInKm.length === 0) {
+        return null;
+    }
+
+    const averageDistanceKm = distancesInKm.reduce((sum, distance) => sum + distance, 0) / distancesInKm.length;
+    return averageDistanceKm * 1000;
+}
+
+// FCC contour change: this gives a backup radius when the FCC API cannot find a station.
+function getFallbackRadiusMeters(station) {
+    const callSign = station.callSign.toUpperCase();
+
+    // FCC contour change: translator call signs often look like K265DF or W212AP, and they usually cover a smaller area.
+    if (/^[KW]\d{3}[A-Z]{2}$/.test(callSign)) {
+        return 20 * 1609.34;
+    }
+
+    // FCC contour change: HD subchannels use the parent station signal, so this keeps them medium-sized if FCC lookup fails.
+    if (/-HD\d+$/i.test(callSign)) {
+        return 35 * 1609.34;
+    }
+
+    // FCC contour change: full-power FM stations usually cover more area, so this is the general backup estimate.
+    return 45 * 1609.34;
+}
+
+// FCC contour change: this draws an estimated circle when an official FCC contour is not available.
+function showFallbackRadius(station, color, marker) {
+    const radiusMeters = getFallbackRadiusMeters(station);
+    const radiusMiles = (radiusMeters / 1609.34).toFixed(1);
+
+    activeContourLayer = L.circle([station.lat, station.lng], {
+        radius: radiusMeters,
+        color: color,
+        fillColor: color,
+        fillOpacity: 0.12,
+        opacity: 0.7,
+        weight: 2,
+        dashArray: '6 6',
+        interactive: false
+    }).addTo(map);
+
+    map.fitBounds(activeContourLayer.getBounds(), { padding: [40, 40] });
+    if (map.getZoom() > 9) {
+        map.setZoom(9);
+    }
+    marker.setPopupContent(`<b>${station.callSign}</b><br>${station.city}, ${station.stateCode}<br>${station.frequency}<br>FCC contour was not found.<br>Estimated radius: ${radiusMiles} miles`);
+    marker.openPopup();
+}
+
+// FCC contour change: this asks the FCC API for a station contour and draws an approximate round radius on the Leaflet map.
+async function showFccContour(station, color) {
+    const requestId = latestContourRequestId + 1;
+    latestContourRequestId = requestId;
+
+    removeActiveContour();
+
+    const marker = markers[station.callSign];
+    marker.setPopupContent(`<b>${station.callSign}</b><br>${station.city}, ${station.stateCode}<br>${station.frequency}<br>Loading FCC contour...`);
+
+    try {
+        const cacheKey = station.facilityId || getFccCallSign(station);
+        let contourData = contourCache.get(cacheKey);
+
+        if (!contourData) {
+            const response = await fetch(getFccContourUrl(station));
+
+            if (!response.ok) {
+                throw new Error('No FCC contour found');
+            }
+
+            contourData = await response.json();
+            contourCache.set(cacheKey, contourData);
+        }
+
+        if (requestId !== latestContourRequestId) {
+            return;
+        }
+
+        const radiusMeters = getApproxRadiusMeters(contourData);
+
+        if (!radiusMeters) {
+            throw new Error('FCC contour did not include distance values');
+        }
+
+        activeContourLayer = L.circle([station.lat, station.lng], {
+            radius: radiusMeters,
+            color: color,
+            fillColor: color,
+            fillOpacity: 0.18,
+            opacity: 0.9,
+            weight: 2,
+            interactive: false
+        }).addTo(map);
+
+        map.fitBounds(activeContourLayer.getBounds(), { padding: [40, 40] });
+        if (map.getZoom() > 9) {
+            map.setZoom(9);
+        }
+
+        const properties = contourData.features?.[0]?.properties || {};
+        const contourLabel = properties.field ? `${properties.field} dBu FCC contour` : 'FCC contour';
+        const facilityLabel = properties.facility_id ? `<br>Facility ID: ${properties.facility_id}` : '';
+        const radiusMiles = (radiusMeters / 1609.34).toFixed(1);
+
+        marker.setPopupContent(`<b>${station.callSign}</b><br>${station.city}, ${station.stateCode}<br>${station.frequency}<br>${contourLabel}${facilityLabel}<br>Approx. radius: ${radiusMiles} miles`);
+        marker.openPopup();
+    } catch (error) {
+        if (requestId !== latestContourRequestId) {
+            return;
+        }
+
+        showFallbackRadius(station, color, marker);
+    }
+}
+
 // loop to create markers and checkboxes
 [...stations].sort((a, b) => a.callSign.localeCompare(b.callSign, undefined, { sensitivity: 'base' })).forEach(station => {
-    const color = getStationColor(station);  // ← add this line
+    const color = getStationColor(station);
 
     const marker = L.marker([station.lat, station.lng], {
         icon: getMarkerIcon(color)
@@ -82,6 +264,11 @@ function getMarkerIcon(color) {
 
     marker.addTo(map);
     markers[station.callSign] = marker;
+
+    // FCC contour change: when a user clicks a marker, draw that station's official FCC contour.
+    marker.on('click', () => {
+        showFccContour(station, color);
+    });
 
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
@@ -156,17 +343,26 @@ function zoomToStations(matchingStations) {
 
 // Map Reset
 function resetMap() {
+    // FCC contour change: cancel any FCC request that is still loading when reset is pressed.
+    latestContourRequestId += 1;
+
+    // FCC contour change: remove the contour when the user resets the whole map.
+    removeActiveContour();
     map.setView([39.5, -98.35], 4);
     showStations(stations);
     dropdown.value = '';
-    city_select.innerHTML = '<option value="">-- Select City --</option>';
+    city_select.innerHTML = '<option value="">Cities</option>';
+    // Station dropdown change: reset the station dropdown when the whole map resets.
+    resetStationDropdown();
     if (searchInput) searchInput.value = '';
 }
 
 // State dropdown filter
 dropdown.addEventListener('change', event => {
     const selectedState = event.target.value;
-    city_select.innerHTML = '<option value="">-- Select City --</option>';
+    city_select.innerHTML = '<option value="">Cities</option>';
+    // Station dropdown change: clear old station options when the user changes states.
+    resetStationDropdown();
 
     if (!selectedState) {
         resetMap();
@@ -196,8 +392,32 @@ city_select.addEventListener('change', event => {
         return station.city === selectedCity && station.stateCode === selectedState;
     });
 
+    // Station dropdown change: after city is selected, show only stations from that city in the station dropdown.
+    fillStationDropdown(cityStations);
     showStations(cityStations);
     zoomToStations(cityStations);
+});
+
+// Station dropdown change: selecting one station filters the map to that station and shows its FCC radius.
+station_select.addEventListener('change', event => {
+    const selectedCallSign = event.target.value;
+
+    if (!selectedCallSign) {
+        return;
+    }
+
+    const selectedStation = stations.find(station => {
+        return station.callSign === selectedCallSign;
+    });
+
+    if (!selectedStation) {
+        return;
+    }
+
+    const color = getStationColor(selectedStation);
+    showStations([selectedStation]);
+    // Station dropdown change: do not zoom to only the marker because the radius function will zoom to the full radius.
+    showFccContour(selectedStation, color);
 });
 
 // Search suggestions and keyword search part

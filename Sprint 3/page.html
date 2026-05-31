@@ -23,22 +23,35 @@
         <div class="main">
             <div id="map"></div>
         </div>
+<div class="sidebar">
 
-        <div class="sidebar">
-
-            <input class="search" type="text" placeholder="Search">
-            <select id="dropdown" class="state">
-                <option value="">-- State --</option>
-            </select>
-
-            <select id="city_select" class="cities">
-                <option value="">-- Select City --</option>
-            </select>
-
-            <div class="list">
-             <ul id="stationList">
-            </ul>
+            <div class="sidebar-section">
+                <input class="search enhanced-input" type="text" placeholder="🔍 Search stations...">
             </div>
+
+            <div class="sidebar-section">
+                <label class="sidebar-label">State</label>
+                <select id="dropdown" class="enhanced-select">
+                    <option value="">-- Select State --</option>
+                </select>
+            </div>
+
+            <div class="sidebar-section">
+                <label class="sidebar-label">City</label>
+                <select id="city_select" class="enhanced-select">
+                    <option value="">-- Select City --</option>
+                </select>
+            </div>
+
+            <div class="sidebar-section list-container">
+                <h3 class="list-title">Stations</h3>
+                <ul id="stationList" class="station-list"></ul>
+            </div>
+
+            <select id="station_select" class="station">
+                <option value="">Station</option>
+            </select>
+            
         </div>
 
     </div>
