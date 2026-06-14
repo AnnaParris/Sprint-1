@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Radio Map Wireframe</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js" defer></script>
+    <script src="stations.js" defer></script>
+    <script src="map.js" defer></script>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+</head>
+
+<body>
+
+    <div class="container">
+
+        <div class="topbar">
+            <div>
+                <img id="logo" src="P48_Logo.png" alt="logo">
+            </div>
+            <div class="title">USA Radio Map</div>
+        </div>
+        <div class="main">
+            <div id="map"></div>
+        </div>
+
+        <div class="sidebar">
+            <button id="collapseBtn" class="collapse-btn">⮜</button>
+
+            <div class="sidebar-section">
+                <label class="sidebar-label"><span>🔍</span> Search</label>
+                <input class="search enhanced-input" type="text" placeholder="Search stations...">
+                <button id="addSearchBtn" type="button">Add to results</button>
+            </div>
+
+            <div class="sidebar-section">
+                <label class="sidebar-label"><span>🗺️</span> State</label>
+                <select id="dropdown" class="enhanced-select">
+                    <option value="">-- Select State --</option>
+                </select>
+            </div>
+
+            <div class="sidebar-section">
+                <label class="sidebar-label"><span>🏙️</span> City</label>
+                <select id="city_select" class="enhanced-select">
+                    <option value="">-- Select City --</option>
+                </select>
+            </div>
+
+            <div class="sidebar-section">
+                <label class="sidebar-label"><span>📻</span> Station</label>
+                <select id="station_select" class="enhanced-select">
+                    <option value="">-- Select Station --</option>
+                </select>
+            </div>
+
+            <div class="sidebar-section">
+                <label class="sidebar-label"><span>🌐</span> Network</label>
+                <select id="network_select" class="enhanced-select">
+                    <option value="">-- Select Network --</option>
+                    <option value="kLove">K-LOVE</option>
+                    <option value="air1">Air1</option>
+                    <option value="wayFm">WayFM</option>
+                    <option value="christianFm">Christian FM</option>
+                    <option value="familyLife">Family Life</option>
+                    <option value="joyFm">Joy FM</option>
+                    <option value="faithNetwork">Faith Network</option>
+                    <option value="moody">Moody Radio</option>
+                    <option value="metroMarket">Metro Market</option>
+                    <option value="individualStations">Independent Stations</option>
+                    <option value="bottRadioNetwork">Bott Radio Network</option>
+                </select>
+            </div>
+
+            <div class="sidebar-section list-container">
+                <h3 class="list-title">Stations</h3>
+                <ul id="stationList" class="station-list"></ul>
+            </div>
+
+
+        </div>
+
+    </div>
+
+</body>
+
+</html>
