@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Radio Map Wireframe</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js" defer></script>
+    <script src="stations.js" defer></script>
+    <script src="map.js" defer></script>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+</head>
+
+<body>
+
+    <div class="container">
+
+        <div class="topbar">
+            <div>
+            <img id="logo" src="P48_Logo.png" alt="logo"></div>
+            <div class="title">USA Radio Map</div>
+        </div>
+        <div class="main">
+            <div id="map"></div>
+        </div>
+<div class="sidebar">
+
+    <div class="sidebar-section">
+        <input class="search enhanced-input" type="text" placeholder="🔍 Search stations...">
+    </div>
+
+    <div class="sidebar-section">
+        <label class="sidebar-label">State</label>
+        <select id="dropdown" class="enhanced-select">
+            <option value="">-- Select State --</option>
+        </select>
+    </div>
+
+    <div class="sidebar-section">
+        <label class="sidebar-label">City</label>
+        <select id="city_select" class="enhanced-select">
+            <option value="">Cities</option>
+        </select>
+    </div>
+
+    <div class="sidebar-section">
+        <label class="sidebar-label">Station</label>
+        <select id="station_select" class="enhanced-select">
+            <option value="">Station</option>
+        </select>
+    </div>
+
+    <div class="sidebar-section list-container">
+        <h3 class="list-title">Stations</h3>
+        <ul id="stationList" class="station-list"></ul>
+    </div>
+
+</div>
+</html>
